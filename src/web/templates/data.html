@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Dataset{% endblock %}
+{% block content %}
+<h2>Thermal Camera Dataset</h2>
+<table>
+    <tr>
+        <th>Timestamp</th>
+        <th>Temperature (°C)</th>
+        <th>Classification</th>
+    </tr>
+    {% for row in data %}
+    <tr>
+        <td>{{ row['timestamp'] }}</td>
+        <td>{{ row['temperature'] }}</td>
+        <td>{{ row['classification'] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
