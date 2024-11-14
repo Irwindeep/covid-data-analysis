@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  airflow-scheduler:
+    build: .
+    container_name: airflow_scheduler
+    command: airflow scheduler
+    environment:
+      - AIRFLOW_HOME=/opt/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqlconnector://airflow:airflow@airflow-db/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./airflow.cfg:/opt/airflow/airflow.cfg
+      - ./webserver_config.py:/opt/airflow/webserver_config.py
+    depends_on:
+      - airflow-db
+
+  airflow-webserver:
+    build: .
+    container_name: airflow_webserver
+    command: airflow webserver --port 8080
+    ports:
+      - "8080:8080"
+    environment:
+      - AIRFLOW_HOME=/opt/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqlconnector://airflow:airflow@airflow-db/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./airflow.cfg:/opt/airflow/airflow.cfg
+      - ./webserver_config.py:/opt/airflow/webserver_config.py
+    depends_on:
+      - airflow-db
+
+  airflow-db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=airflow
+      - MYSQL_USER=airflow
+      - MYSQL_PASSWORD=airflow
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+volumes:
+  mysql_data:
