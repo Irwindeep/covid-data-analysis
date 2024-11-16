@@ -32,7 +32,7 @@ CREATE TABLE thermal_images(
     max_temperature DECIMAL(5, 2) NOT NULL,
     region_of_interest ENUM('Chest', 'Face', 'Back', 'Side'),
     version VARCHAR(255) NOT NULL DEFAULT '1.0',
-    version_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP.
+    version_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (session_id) REFERENCES thermal_sessions(session_id) ON DELETE CASCADE
 );
 
