@@ -3,9 +3,11 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from ingestion.database import Database
+from ingestion.data_processing import DataProcessor
 from dotenv import load_dotenv
 import os
 import pandas as pd
+from typing import List
 
 logging.basicConfig(
     level=logging.INFO,
@@ -42,115 +44,95 @@ class Ingestor:
         self.data_dir = data_dir
 
         self.dag = dag
+        self.processor = DataProcessor()
+
+    def process_and_ingest_data(
+            self,
+            file_name: str,
+            required_columns: List[str],
+            table_name: str
+    ) -> None:
+        file_path = os.path.join(self.data_dir, file_name)
+
+        try:
+            df = pd.read_csv(file_path)
+            logger.info(f"Loaded data from {file_path}")
+
+            df = self.processor.validate_data(df, required_columns)
+            df = self.processor.clean_data(df)
+            df = self.processor.transform_data(df)
+
+            for _, row in df.iterrows():
+                with self.database as db:
+                    db.insert_data(table_name, row.to_dict())
+            
+            logger.info(f"Successfully ingested data into {table_name}")
+
+        except Exception as e:
+            logger.error(f"Error processing and ingesting {file_name}: {e}")
 
     def ingest_person_data(self) -> None:
-        person_data_path = os.path.join(self.data_dir, "persons.csv")
-
-        try:
-            df = pd.read_csv(person_data_path)
-            logger.info(f"Loaded person data from {person_data_path}")
-
-            for _, row in df.iterrows():
-                data = {
-                    "name": row["name"],
-                    "age": row["age"],
-                    "gender": row["gender"],
-                    "email": row["email"],
-                    "phone_no": row["phone_no"],
-                    "address": row["address"]
-                }
-
-                with self.database as db:
-                    db.insert_data('persons', data)
-
-        except Exception as e:
-            logger.error(f"Error ingesting person data: {e}")
+        self.process_and_ingest_data(
+            file_name="persons.csv",
+            required_columns=[
+                "name",
+                "age",
+                "gender",
+                "email",
+                "phone_no",
+                "address"
+            ],
+            table_name="persons"
+        )
 
     def ingest_thermal_session_data(self) -> None:
-        session_data_path = os.path.join(self.data_dir, "thermal_sessions.csv")
-
-        try:
-            df = pd.read_csv(session_data_path)
-            logger.info(f"Loaded thermal session data from {session_data_path}")
-
-            for _, row in df.iterrows():
-                data = {
-                    "person_id": row["person_id"],
-                    "session_date": row["session_date"],
-                    "room_temperature": row["room_temperature"],
-                    "view": row["view"],
-                }
-
-                with self.database as db:
-                    db.insert_data('thermal_sessions', data)
-
-        except Exception as e:
-            logger.error(f"Error ingesting thermal session data: {e}")
+        self.process_and_ingest_data(
+            file_name="thermal_sessions.csv",
+            required_columns=[
+                "person_id",
+                "session_date",
+                "room_temperature",
+                "view"
+            ],
+            table_name="thermal_sessions"
+        )
 
     def ingest_thermal_image_data(self) -> None:
-        image_data_path = os.path.join(self.data_dir, "thermal_images.csv")
-
-        try:
-            df = pd.read_csv(image_data_path)
-            logger.info(f"Loaded thermal image data from {image_data_path}")
-
-            for _, row in df.iterrows():
-                data = {
-                    "session_id": row["session_id"],
-                    "image_path": row["image_path"],
-                    "min_temperature": row["min_temperature"],
-                    "max_temperature": row["max_temperature"],
-                    "region_of_interest": row["region_of_interest"]
-                }
-
-                with self.database as db:
-                    db.insert_data('thermal_images', data)
-
-        except Exception as e:
-            logger.error(f"Error ingesting thermal image data: {e}")
+        self.process_and_ingest_data(
+            file_name="thermal_images.csv",
+            required_columns=[
+                "session_id",
+                "image_path",
+                "min_temperature",
+                "max_temperature",
+                "region_of_interest"
+            ],
+            table_name="thermal_images"
+        )
 
     def ingest_vital_sign_data(self) -> None:
-        vital_sign_data_path = os.path.join(self.data_dir, "vital_signs.csv")
-
-        try:
-            df = pd.read_csv(vital_sign_data_path)
-            logger.info(f"Loaded Vital Sign data from {vital_sign_data_path}")
-
-            for _, row in df.iterrows():
-                data = {
-                    "person_id": row["person_id"],
-                    "heart_rate": row["heart_rate"],
-                    "oxygen_saturation": row["oxygen_saturation"],
-                    "systolic_pressure": row["systolic_pressure"],
-                    "diastolic_pressure": row["diastolic_pressure"]
-                }
-
-                with self.database as db:
-                    db.insert_data('vital_signs', data)
-
-        except Exception as e:
-            logger.error(f"Error ingesting vital signs data: {e}")
+        self.process_and_ingest_data(
+            file_name="vital_signs.csv",
+            required_columns=[
+                "person_id",
+                "heart_rate",
+                "oxygen_saturation",
+                "systolic_pressure",
+                "diastolic_pressure"
+            ],
+            table_name="vital_signs"
+        )
 
     def ingest_health_status_data(self) -> None:
-        health_status_data_path = os.path.join(self.data_dir, "health_status.csv")
-
-        try:
-            df = pd.read_csv(health_status_data_path)
-            logger.info(f"Loaded health status data from {health_status_data_path}")
-
-            for _, row in df.iterrows():
-                data = {
-                    "person_id": row["person_id"],
-                    "covid_symptoms": row["covid_symptoms"],
-                    "forehead_temp": row["forehead_temp"],
-                    "status": row["status"]
-                }
-
-                with self.database as db:
-                    db.insert_data('thermal_images', data)
-
-        except Exception as e:
-            logger.error(f"Error ingesting health status data: {e}")
+        self.process_and_ingest_data(
+            file_name="health_status.csv",
+            required_columns=[
+                "person_id",
+                "covid_symptoms",
+                "forehead_temp",
+                "status"
+            ]
+        )
 
     def create_dag(self) -> None:
         with self.dag as dag:
