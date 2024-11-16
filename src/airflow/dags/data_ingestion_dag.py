@@ -47,6 +47,7 @@ class Ingestor:
         self.dag = dag
         self.processor = DataProcessor()
         self.es_client = ElasticsearchClient()
+        self.version = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     def process_and_ingest_data(
             self,
@@ -65,12 +66,17 @@ class Ingestor:
             df = self.processor.transform_data(df)
 
             for _, row in df.iterrows():
+                row["version"] = self.version,
+                row["version_timestamp"] = datetime.now()
                 with self.database as db:
                     db.insert_data(table_name, row.to_dict())
             
             logger.info(f"Successfully ingested data into {table_name}")
 
             es_data = df.to_dict(orient="records")
+            for record in es_data:
+                record["version"] = self.version
+                record["version_timestamp"] = datetime.now()
             success = self.es_client.index_data(index_name=table_name, data=es_data)
             if success:
                 logger.info(f"Successfully indexed {file_name} data into Elasticsearch")
