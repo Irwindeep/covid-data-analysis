@@ -4,6 +4,7 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from ingestion.database import Database
 from ingestion.data_processing import DataProcessor
+from ingestion.elasticsearch_client import ElasticsearchClient
 from dotenv import load_dotenv
 import os
 import pandas as pd
@@ -45,6 +46,7 @@ class Ingestor:
 
         self.dag = dag
         self.processor = DataProcessor()
+        self.es_client = ElasticsearchClient()
 
     def process_and_ingest_data(
             self,
@@ -67,6 +69,11 @@ class Ingestor:
                     db.insert_data(table_name, row.to_dict())
             
             logger.info(f"Successfully ingested data into {table_name}")
+
+            es_data = df.to_dict(orient="records")
+            success = self.es_client.index_data(index_name=table_name, data=es_data)
+            if success:
+                logger.info(f"Successfully indexed {file_name} data into Elasticsearch")
 
         except Exception as e:
             logger.error(f"Error processing and ingesting {file_name}: {e}")

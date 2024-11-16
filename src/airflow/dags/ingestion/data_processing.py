@@ -17,7 +17,6 @@ class DataProcessor:
 
     def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df.drop_duplicates(inplace=True)
-        df.fillna(value={"age": 0, "email": "unknown@example.com"}, inplace=True)
         return df
 
     def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
