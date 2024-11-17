@@ -13,11 +13,13 @@ class ElasticsearchClient:
     def __init__(
             self,
             host : str ="localhost",
-            port : int = 9200
+            port : int = 9200,
+            scheme : str = "http"
     ) -> None:
         self.host = host
         self.port = port
-        self.client = Elasticsearch([{"host": self.host, "port": self.port}])
+        self.scheme = scheme
+        self.client = Elasticsearch([{"host": self.host, "port": self.port, "scheme": self.scheme}])
         if not self.client.ping():
             raise ValueError("Connection to Elasticsearch failed!")
         logger.info(f"Connected to Elasticsearch at {self.host}:{self.port}")

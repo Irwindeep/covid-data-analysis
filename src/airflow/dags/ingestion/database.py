@@ -2,6 +2,15 @@ from sqlalchemy import create_engine, inspect, MetaData, Table
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Optional, List
+import pandas as pd
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 class Database:
     def __init__(
@@ -31,12 +40,14 @@ class Database:
     ) -> None:
         table = Table(table_name, self.metadata, autoload_with=self.engine)
 
+        processed_data = {key: (value if not pd.isna(value) else None) for key, value in data.items()}
+
         try:
-            self.session.execute(table.insert(), data)
+            self.session.execute(table.insert(), processed_data)
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            print(f"Failed to insert data: {e}")
+            logger.error(f"Failed to insert data: {e}")
 
     def __enter__(self) -> 'Database':
         self.session = self.Session()
@@ -44,6 +55,6 @@ class Database:
     
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         self.session.close()
-        if exc_type: print(f"An error occured: {exc_val}")
+        if exc_type: logger.error(f"An error occured: {exc_val}")
 
         return True

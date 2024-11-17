@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from ingestion.database import Database
 from ingestion.data_processing import DataProcessor
 from ingestion.elasticsearch_client import ElasticsearchClient
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
 import pandas as pd
 from typing import List
@@ -144,7 +144,8 @@ class Ingestor:
                 "covid_symptoms",
                 "forehead_temp",
                 "status"
-            ]
+            ],
+            table_name="health_status"
         )
 
     def create_dag(self) -> None:
@@ -179,16 +180,15 @@ class Ingestor:
                 dag=dag
             )
 
-            ingest_person_task >> ingest_thermal_session_task >> ingest_thermal_image_task >> ingest_vital_sign_task >> ingest_health_status_task
+            ingest_person_task >> ingest_thermal_session_task >> [ingest_thermal_image_task, ingest_vital_sign_task, ingest_health_status_task
+]
 
+load_dotenv(dotenv_path=find_dotenv(".env"))
 
-if __name__=="__main__":
-    load_dotenv("../../../.env")
+DB_USERNAME = str(os.getenv("MYSQL_USERNAME"))
+DB_PASSWORD = str(os.getenv("MYSQL_PASSWORD"))
+DB_NAME = str(os.getenv("MYSQL_DB"))
+DATA_DIR = str(os.getenv("DATA_DIR"))
 
-    DB_USERNAME = os.getenv("MYSQL_USERNAME")
-    DB_PASSWORD = os.getenv("MYSQL_PASSWORD")
-    DB_NAME = os.getenv("MYSQL_DB")
-    DATA_DIR = os.getenv("DATA_DIR")
-    
-    ingestor = Ingestor(DB_USERNAME, DB_PASSWORD, DB_NAME, DATA_DIR, dag)
-    ingestor.create_dag()
+ingestor = Ingestor(DB_USERNAME, DB_PASSWORD, DB_NAME, DATA_DIR, dag)
+ingestor.create_dag()

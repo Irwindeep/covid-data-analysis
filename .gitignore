@@ -6,3 +6,5 @@ __pycache__/
 airflow.cfg
 airflow.db
 webserver_config.py
+images/
+db/
