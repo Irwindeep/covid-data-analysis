@@ -49,6 +49,11 @@ class Ingestor:
         self.es_client = ElasticsearchClient()
         self.version = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+        self.index_body = {
+            "number_of_shards": 1,
+            "number_of_replicas": 0
+        }
+
     def process_and_ingest_data(
             self,
             file_name: str,
@@ -77,9 +82,16 @@ class Ingestor:
             for record in es_data:
                 record["version"] = self.version
                 record["version_timestamp"] = datetime.now()
+
+            if not self.es_client.index_exists(table_name):
+                self.es_client.create_index(index_name=table_name, body=self.index_body)
+
             success = self.es_client.index_data(index_name=table_name, data=es_data)
             if success:
                 logger.info(f"Successfully indexed {file_name} data into Elasticsearch")
+
+            df = df.iloc[0:0]
+            df.to_csv(file_path)
 
         except Exception as e:
             logger.error(f"Error processing and ingesting {file_name}: {e}")

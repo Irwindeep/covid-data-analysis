@@ -17,6 +17,8 @@ class DataProcessor:
 
     def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df.drop_duplicates(inplace=True)
+        df = df.map(lambda x: None if pd.isna(x) else x)
+        
         return df
 
     def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
