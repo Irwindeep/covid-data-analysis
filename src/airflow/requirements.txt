@@ -1,0 +1,6 @@
+apache-airflow==2.10.3
+python-dotenv==1.0.1
+pandas==2.2.3
+elasticsearch==8.16.0
+SQLAlchemy==1.4.54
+PyMySQL==1.1.1

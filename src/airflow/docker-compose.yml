@@ -1,48 +1,56 @@
-version: '3.8'
-
 services:
-  airflow-scheduler:
-    build: .
-    container_name: airflow_scheduler
-    command: airflow scheduler
-    environment:
-      - AIRFLOW_HOME=/opt/airflow
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqlconnector://airflow:airflow@airflow-db/airflow
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./airflow.cfg:/opt/airflow/airflow.cfg
-      - ./webserver_config.py:/opt/airflow/webserver_config.py
-    depends_on:
-      - airflow-db
-
-  airflow-webserver:
-    build: .
-    container_name: airflow_webserver
-    command: airflow webserver --port 8080
+  airflow:
+    build:
+      context: .
+    container_name: airflow
     ports:
       - "8080:8080"
-    environment:
-      - AIRFLOW_HOME=/opt/airflow
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqlconnector://airflow:airflow@airflow-db/airflow
     volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./airflow.cfg:/opt/airflow/airflow.cfg
-      - ./webserver_config.py:/opt/airflow/webserver_config.py
-    depends_on:
-      - airflow-db
-
-  airflow-db:
-    image: mysql:8.0
+      - ./dags:/usr/local/airflow/dags
+      - ./logs:/usr/local/airflow/logs
+      - ./plugins:/usr/local/airflow/plugins
+    env_file:
+      - .env
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=airflow
-      - MYSQL_USER=airflow
-      - MYSQL_PASSWORD=airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+pymysql://${MYSQL_USERNAME}:${MYSQL_PASSWORD}@mysql/${MYSQL_DB}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_started
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: airflow
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.16.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
 
 volumes:
   mysql_data:
+  es_data:
