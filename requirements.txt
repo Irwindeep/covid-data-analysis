@@ -1,0 +1,15 @@
+apache-airflow==2.10.3
+python-dotenv==1.0.1
+pandas==2.2.3
+elasticsearch==8.16.0
+SQLAlchemy==1.4.54
+PyMySQL==1.1.1
+mysql-connector-python==9.1.0
+opencv-python==4.10.0.84
+scikit-learn==1.5.2
+scikit-image==0.24.0
+tensorflow==2.18.0
+pillow==11.0.0
+Flask==2.3.2
+Flask-SQLAlchemy==3.0.5
+Werkzeug==2.3.6

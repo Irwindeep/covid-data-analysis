@@ -9,3 +9,5 @@ webserver_config.py
 images/
 db/
 dataset/
+instance/
+uploads/

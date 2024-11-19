@@ -192,3 +192,29 @@ pre {
         font-size: 14px;
     }
 }
+
+.readme-content h1, .readme-content h2, .readme-content h3 {
+    font-weight: bold;
+    margin-top: 1em;
+    color: #333;
+    font-size: large;
+}
+
+.readme-content p {
+    line-height: 1.6;
+    margin-bottom: 1em;
+}
+
+.readme-content code {
+    background-color: #f4f4f4;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.readme-content pre {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    overflow-x: auto;
+}

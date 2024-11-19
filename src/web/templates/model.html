@@ -1,15 +1,14 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
 {% block content %}
-<form method="POST" class="mx-auto" style="max-width: 400px;">
-    <h3>Login</h3>
-    <div class="mb-3">
-        <label>Username</label>
-        <input type="text" name="username" class="form-control">
+<div class="card">
+    <div class="card-header">
+        <h1>{{ title }}</h1>
     </div>
-    <div class="mb-3">
-        <label>Password</label>
-        <input type="password" name="password" class="form-control">
+    <div class="card-body">
+        <div class="readme-content">
+            {{ readme_content | safe }}
+        </div>
     </div>
-    <button type="submit" class="btn btn-primary w-100">Login</button>
-</form>
+</div>
 {% endblock %}
